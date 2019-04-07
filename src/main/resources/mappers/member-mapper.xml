@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<!-- namespace 接口的全称 -->
+<mapper namespace="com.fh.shop.backend.mapper.member.IMemberMapper">
+
+    <resultMap id="memberMap" type="member">
+        <result column="id" property="id"></result>
+        <result column="userName" property="userName"></result>
+        <result column="password" property="password"></result>
+        <result column="email" property="email"></result>
+        <result column="birthday" property="birthday"></result>
+        <result column="phone" property="phone"></result>
+        <result column="areaName" property="areaName"></result>
+        <result column="areaIds" property="areaIds"></result>
+    </resultMap>
+    <sql id="memberSql">
+        <where>
+            <if test="areaIds != null and areaIds != '' ">
+                areaIds like concat(#{areaIds},'%')
+            </if>
+            <if test="userName != null and userName != '' ">
+                and userName like concat('%',#{userName},'%')
+            </if>
+            <if test="minBirthday != null">
+                and birthday > #{minBirthday}
+            </if>
+            <if test="maxBirthday != null">
+                and birthday &lt;= #{maxBirthday}
+            </if>
+        </where>
+    </sql>
+    <select id="queryMember" parameterType="member" resultMap="memberMap">
+        select s.* from(
+        select id, username, password, email, birthday, phone, areaName from t_member
+        <include refid="memberSql"></include>
+        ) s
+        limit #{startPos},#{pageSize}
+    </select>
+    <select id="countMember" parameterType="member" resultType="long">
+        select count(*) from t_member
+        <include refid="memberSql"></include>
+    </select>
+    <select id="cityTownList" parameterType="city" resultType="city">
+        select id, name ,pid from t_city where pid = #{id}
+    </select>
+    <select id="toUpdateMember" parameterType="member" resultType="member">
+		select id, username, password, email, birthday, phone, areaName, areaIds from t_member where id = #{id}
+	</select>
+    <update id="updateMember" parameterType="member">
+      update t_member set username=#{userName}, password=#{password}, phone=#{phone}, email=#{email}, birthday=#{birthday}, phone=#{phone}, areaName=#{areaName}, areaIds=#{areaIds} where id=#{id}
+    </update>
+</mapper>

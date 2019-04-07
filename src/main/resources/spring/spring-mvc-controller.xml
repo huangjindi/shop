@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="GBK"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:mvc="http://www.springframework.org/schema/mvc"
+	   xsi:schemaLocation="http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd  
+
+
+        http://www.springframework.org/schema/beans   
+        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+
+
+
+
+        http://www.springframework.org/schema/mvc   
+    	http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+        http://www.springframework.org/schema/context   
+        http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+	<!-- 文件上传表单的视图解析器 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize"><value>1000000000</value></property>
+		<property name="defaultEncoding"><value>UTF-8</value></property>
+	</bean>
+
+
+	<!-- 对项目中的所有类进行扫描以完成Bean创建并进行自动注入。
+           支持 @Controller、@Service 以及 @Repository 和 @Component -->
+	<!-- 扫描项目中com.fh.shop.controller包下所有的类，从而使类中的@Controller注解生效 -->
+    <context:component-scan base-package="com.fh.shop.backend.controller"/>
+    <context:component-scan base-package="com.fh.shop.backend.api"/>
+
+    <!-- 加载@responseBody注解 -->
+    <mvc:annotation-driven enable-matrix-variables="true"/>
+    
+	<!--
+        jsp视图解析器，对模型视图名称的解析，即在模型视图名称添加前后缀
+        如/view/welcome.jsp对应的视图名就是：welcome
+        这个类在视图解析器链中一定要定义在其他视图的后面，因为它始终会返回一个视图
+    -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/view/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+    
+    <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<ref bean="mappingJacksonHttpMessageConverter" />
+			</list>
+		</property>
+	</bean>
+	<bean id="mappingJacksonHttpMessageConverter" class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		<property name="supportedMediaTypes">
+			<list>
+				<value>text/html;charset=UTF-8</value>
+			</list>
+		</property>
+	</bean>
+	
+	 <!--springMvc拦截器  -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<!-- 拦截所有mvc控制器 -->
+			<mvc:mapping path="/**"/>
+			<!-- mvc:exclude-mapping是另外一种拦截，它可以在你后来的测试中对某个页面进行不拦截，这样就不用在
+				LoginInterceptor的preHandler方法里面获取不拦截的请求uri地址了(优选) -->
+		 	<mvc:exclude-mapping path="/user/userLogin.jhtml" />
+			<mvc:exclude-mapping path="/user/toAddUser.jhtml" />
+			<mvc:exclude-mapping path="/user/addUser.jhtml" />
+			<mvc:exclude-mapping path="/user/judgeUserName.jhtml" />
+			<mvc:exclude-mapping path="/api/product/queryProductApi.jhtml" />
+			 <!--静态资源包-->
+          <!--   <mvc:exclude-mapping path="/html/**"/> -->
+			<bean class="com.fh.shop.backend.Interceptor.LoginInterceptor"></bean>			
+		</mvc:interceptor>
+	</mvc:interceptors>
+	
+	<!-- Aop 日志统一管理 -->
+    <bean id="logAspect" class="com.fh.shop.backend.common.LogAspect"></bean>
+    
+    <aop:config>
+    <!--切面  -->
+    	<aop:aspect ref="logAspect">
+    	<!--  切点-->
+    		<aop:pointcut expression="execution(* com.fh.shop.backend.controller..*.add*(..))||execution(* com.fh.shop.backend.controller..*.update*(..))||execution(* com.fh.shop.backend.controller..*.del*(..))||execution(* com.fh.shop.backend.controller..*.userLogin*(..))||execution(* com.fh.shop.backend.controller..*.loginOut*(..))" id="pointcut"/>
+    		<!--  方位-->
+    		<aop:around method="logAspect" pointcut-ref="pointcut"/>
+    	</aop:aspect>
+    </aop:config>
+
+    
+</beans>

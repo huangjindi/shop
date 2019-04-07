@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>   
+<!DOCTYPE mapper   
+PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"  
+"http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"> 
+
+<!-- namespace 接口的全称 -->
+<mapper namespace="com.fh.shop.backend.mapper.area.IAreaMapper">
+	<resultMap id="areaMap" type="com.fh.shop.backend.po.area.Area">
+		<result column="id" property="id"></result>
+		<result column="name" property="name"></result>
+		<result column="pid" property="pId"></result>
+	</resultMap>
+	<select id="queryAreaList" resultMap="areaMap">
+		select id,name,pid from t_city
+	</select>
+	<insert id="addArea" parameterType="area">
+		<selectKey keyProperty="id" resultType="int" order="AFTER">
+			select last_insert_id();
+		</selectKey>
+		insert into t_city (name,pid) values(#{name},#{pId})
+	</insert>
+	<delete id="deleteArea" parameterType="list">
+		delete from t_city where id in
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+	<update id="updateArea" parameterType="area">
+		update t_city set name=#{name} where id = #{id}
+	</update>
+</mapper>

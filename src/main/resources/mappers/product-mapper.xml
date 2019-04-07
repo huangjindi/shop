@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>   
+<!DOCTYPE mapper   
+PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"  
+"http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"> 
+
+<!-- namespace 接口的全称 -->
+<mapper namespace="com.fh.shop.backend.mapper.product.IProductMapper">
+	<!-- id接口中的方法  parameterType为实体类的全称，配置文件已经做过处理了，直接写类名小写 -->
+<!-- 产品添加 -->
+	<insert id="addProduct" parameterType="product">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			select last_insert_id();
+		</selectKey>
+		insert into t_product (name,price,createTime,updateTime,brandId,photoPath,photoName)
+		values (#{productName},#{productPrice},#{createTime},#{updateTime},#{brand.id},#{photoPath},#{photoName})
+	</insert>
+<!-- 产品查询 -->
+	<resultMap id="productMap" type="product">
+		<result column="id" property="id"></result>
+		<result column="name" property="productName"></result>
+		<result column="price" property="productPrice"></result>
+		<result column="createTime" property="createTime"></result>
+		<result column="updateTime" property="updateTime"></result>
+		<result column="brandName" property="brand.brandName"></result>
+		<result column="brandid" property="brand.id"></result>
+		<result column="photoPath" property="photoPath"></result>
+	</resultMap>
+	<sql id="sqlWhere">
+		<where>
+			<if test="productName != null and productName != ''">
+				name like concat('%',#{productName},'%')
+			</if>
+			<if test="minPrice != null and minPrice >= 0"> 
+				and price >=#{minPrice}
+			</if>
+			<if test="maxPrice != null and maxPrice >= 0">
+				and price &lt;=#{maxPrice}
+			</if>
+			<if test="minCreateTime != null">
+				and p.createTime >= #{minCreateTime}
+			</if>
+			<if test="maxCreateTime != null">
+				and p.createTime &lt;=#{maxCreateTime}
+			</if>
+			<if test="minUpdateTime != null">
+				and p.updateTime >= #{minUpdateTime}
+			</if>
+			<if test="maxUpdateTime != null">
+				and p.updateTime &lt;= #{maxUpdateTime}
+			</if>
+			<if test="brand.id != -1 and brand.id != null">
+				and brandId = #{brand.id}
+			</if>
+		</where>
+	</sql>
+	<select id="queryProductList" parameterType="product" resultMap="productMap">
+		select t.* from (
+		select p.id,p.name,p.price,b.brandName,p.createTime,p.updateTime,p.photoPath from t_product p
+		left join t_brand b
+		on p.brandid = b.id
+		<include refid="sqlWhere"></include>
+		<if test="field != null and field != ''">
+			order by ${field} ${sort}
+		</if>
+		<if test="field == null or field == ''">
+			order by p.id desc
+		</if>
+		) t
+		limit #{startPos},#{pageSize}
+	</select>
+<!-- 产品删除 -->
+	<delete id="deleteProduct" parameterType="int">
+		delete from t_product where id = #{value}
+	</delete>
+<!-- 修改回显 -->
+	<select id="toUpdateProduct" parameterType="int" resultMap="productMap">
+		select id,name,price,createTime,updateTime,brandId,photoPath,photoName from t_product where id = #{value}
+	</select>
+<!-- 产品修改 -->
+	<update id="updateProduct" parameterType="product">
+		update t_product set name=#{productName},price=#{productPrice},createTime=#{createTime},updateTime=#{updateTime},brandId=#{brand.id},photoPath=#{photoPath} where id=#{id}
+	</update>
+<!-- 批量删除 -->
+	<delete id="deleteAll" parameterType="list">
+		delete from t_product where id in
+		<foreach collection="list" item="productIds" open="(" close=")" separator=",">
+			#{productIds}
+		</foreach>
+	</delete>
+<!-- 查询总条数 -->
+	<select id="countProduct" parameterType="product" resultType="long">
+		select count(*) from t_product p
+		left join t_brand b
+		on p.brandid = b.id
+		<include refid="sqlWhere"></include>
+	</select>
+	<select id="productList" parameterType="product" resultMap="productMap">
+		select p.id,p.name,p.price,p.createTime,p.updateTime,b.brandName from t_product p
+		left join t_brand b
+		on p.brandid = b.id
+		<include refid="sqlWhere"></include>
+	</select>
+	<select id="selectMaxId" resultType="int">
+		select max(id) from t_product
+	</select>
+	<select id="productListDemo" resultMap="productMap">
+		select p.id,p.name,p.price,p.createTime,p.updateTime,b.brandName,p.photoPath from t_product p
+		left join t_brand b
+		on p.brandid = b.id
+	</select>
+	<select id="queryProductApi" resultMap="productMap">
+		select id,name,price,photoPath from t_product
+	</select>
+</mapper>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>   
+<!DOCTYPE mapper   
+PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"  
+"http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"> 
+
+<!-- namespace 接口的全称 -->
+<mapper namespace="com.fh.shop.backend.mapper.photo.IPhotoMapper">
+
+	<resultMap id="photoMap" type="photo">
+		<result column="id" property="id"></result>
+		<result column="photoPath" property="photoPath"></result>
+		<result column="productId" property="productId"></result>
+	</resultMap>
+	<insert id="addPhoto">
+		insert into t_photo (photoPath,productId,photoName)
+		values
+		<foreach collection="list" item="photoInfo" separator=",">
+			(#{photoInfo.photoPath},#{photoInfo.product.id},#{photoInfo.photoName})
+		</foreach>
+	</insert>
+	<select id="findPhotoList" parameterType="photo" resultMap="photoMap">
+		select t.id,t.photoPath,t.photoName from t_photo t
+		left join t_product p
+		on t.productId = p.id
+		where t.productId = #{id}
+	</select>
+	<select id="selectPhoto" parameterType="int" resultMap="photoMap">
+		select id,photoPath,photoName from t_photo
+		where id = #{id}
+	</select>
+	<update id="updatePhoto" parameterType="photo">
+		update set t_photo photoPath=#{photoPath},photoName={photoName} where productId = #{product.id}
+	</update>
+	<delete id="deletePhoto" parameterType="list">
+		delete from t_photo where id in
+		<foreach collection="list" item="photoIds" open="(" close=")" separator=",">
+			#{photoIds}
+		</foreach>
+	</delete>
+</mapper>

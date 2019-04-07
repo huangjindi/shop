@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>   
+<!DOCTYPE mapper   
+PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"  
+"http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"> 
+
+<!-- namespace 接口的全称 -->
+<mapper namespace="com.fh.shop.backend.mapper.department.IDepartmentMapper">
+	<resultMap id="departmentMap" type="department">
+		<result column="id" property="id"></result>
+		<result column="deptName" property="deptName"></result>
+		<result column="fatherId" property="fatherId"></result>
+		<result column="remark" property="remark"></result>
+	</resultMap>
+	<select id="findDepartment" resultMap="departmentMap">
+		select id, deptName, fatherId, remark from t_dept
+	</select>
+	<insert id="addDept" parameterType="department">
+		<selectKey keyProperty="id" resultType="int" order="AFTER">
+			select last_insert_id();
+		</selectKey>
+		insert into t_dept (deptName, fatherId, remark) values(#{deptName}, #{fatherId}, #{remark})
+	</insert>
+	<update id="updateDept" parameterType="department">
+		update t_dept set deptName=#{deptName}, remark=#{remark} where id = #{id}
+	</update>
+	<delete id="deleteAllDepartment" parameterType="list">
+		delete from t_dept where id in
+		<foreach collection="list" item="ids" open="(" close=")" separator=",">
+			#{ids}
+		</foreach>
+	</delete>
+	<select id="deptExcelOut" parameterType="department" resultMap="departmentMap">
+		select id,deptName,fatherId,remark from t_dept where fatherId = #{id}
+	</select>
+	<select id="queryDept" parameterType="department" resultMap="departmentMap">
+		select id,deptName,fatherId,remark from t_dept where id = #{id}
+	</select>
+</mapper>

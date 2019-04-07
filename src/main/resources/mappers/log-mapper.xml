@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>   
+<!DOCTYPE mapper   
+PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"  
+"http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"> 
+
+<!-- namespace 接口的全称 -->
+<mapper namespace="com.fh.shop.backend.mapper.log.ILogMapper">
+	<!-- id接口中的方法  parameterType为实体类的全称，配置文件已经做过处理了，直接写类名小写 -->
+	<insert id="addLog" parameterType="log">
+		insert into t_log (userName,info,content,status,createTime,useTime) values(#{userName},#{info},#{content},#{status},#{createTime},#{useTime})
+	</insert>
+	<resultMap type="log" id="logMap">
+		<result column="id" property="id"/>
+		<result column="userName" property="userName"/>
+		<result column="info" property="info"/>
+		<result column="status" property="status"/>
+		<result column="createTime" property="createTime"/>
+		<result column="useTime" property="useTime"/>
+		<result column="content" property="content"/>
+	</resultMap>
+	<sql id="logSql">
+		<where>
+			<if test="userName != null and userName !='' ">
+				userName like concat('%',#{userName},'%')
+			</if>
+			<if test="status != null">
+				and status = #{status}
+			</if>
+			<if test="minCreateTime != null and minCreateTime != '' ">
+				and createTime >= #{minCreateTime}
+			</if>
+			<if test="maxCreateTime != null and maxCreateTime != '' ">
+				and createTime &lt;= #{maxCreateTime}
+			</if>
+			<if test="minUserTime != null and minUserTime != '' ">
+				and useTime >= #{minUserTime}
+			</if>
+			<if test="maxUserTime != null and maxUserTime != '' ">
+				and useTime &lt;= #{maxUserTime}
+			</if>
+		</where>
+	</sql>
+	<select id="findLogList" parameterType="log" resultMap="logMap">
+		select id,userName,info,status,createTime,useTime,content from t_log
+		<include refid="logSql"/>
+		order by id desc
+	</select>
+	<select id="totalCount" parameterType="log" resultType="long">
+		select count(*) from t_log
+		<include refid="logSql"/>
+	</select>
+	<select id="selectLogList" parameterType="log" resultMap="logMap">
+		select t.* from (
+		select id,userName,info,status,createTime,useTime,content from t_log
+		<include refid="logSql"/>
+		) t
+		limit #{startPos},#{pageSize}
+	</select>
+</mapper>

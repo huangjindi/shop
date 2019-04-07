@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<!-- namespace 接口的全称 -->
+<mapper namespace="com.fh.shop.backend.mapper.user.IUserMapper">
+    <!-- id接口中的方法  parameterType为实体类的全称，配置文件已经做过处理了，直接写类名小写 -->
+    <resultMap type="user" id="userMap">
+        <result column="id" property="id"/>
+        <result column="userName" property="userName"/>
+        <result column="userpwd" property="userPwd"/>
+        <result column="loginTime" property="loginTime"/>
+        <result column="loginFlag" property="loginFlag"/>
+        <result column="lastLoginTime" property="lastLoginTime"/>
+        <result column="loginErrorFlag" property="loginErrorFlag"/>
+        <result column="status" property="status"/>
+        <result column="birthday" property="birthday"/>
+        <result column="userSex" property="userSex"/>
+        <result column="userPay" property="userPay"/>
+        <result column="realName" property="realName"/>
+        <result column="deptName" property="department.deptName"/>
+        <result column="deptId" property="department.id"/>
+    </resultMap>
+    <sql id="sqlWhere">
+        <where>
+            <if test="userName != null and userName != ''">
+                userName like concat('%',#{userName},'%')
+            </if>
+            <if test="deptList !=null and deptList.size() > 0">
+                and u.deptId in
+                <foreach collection="deptList" item="deptId" open="(" close=")" separator=",">
+                    #{deptId}
+                </foreach>
+            </if>
+        </where>
+    </sql>
+    <select id="queryUserList" parameterType="user" resultMap="userMap">
+        select t.* from (
+        select u.id,userName,status,birthday,userSex,userPay,realName,headerImg,d.deptName from t_user u
+        left join t_dept d
+        on u.deptId = d.id
+        <include refid="sqlWhere"></include>
+        order by u.id desc
+        ) t
+        limit #{startPos},#{pageSize}
+    </select>
+    <select id="totalCount" parameterType="user" resultType="long">
+        select count(*) from t_user u
+        left join t_dept d
+        on u.deptId = d.id
+        <include refid="sqlWhere"></include>
+    </select>
+    <select id="fingUser" parameterType="user" resultMap="userMap">
+		select id,userName,userpwd,loginTime,salt,loginFlag,loginErrorFlag,loginErrorTime,status from t_user where userName=#{userName}
+	</select>
+    <insert id="addUser" parameterType="user">
+		insert into t_user (userName,userPwd,salt,loginFlag,loginTime,realName,userSex,birthday,userPay,deptId,headerImg)
+		values (#{userName},#{userPwd},#{salt},#{loginFlag},#{loginTime},#{realName},#{userSex},#{birthday},#{userPay},#{department.id},#{headerImg})
+	</insert>
+    <select id="judgeUserName" parameterType="user" resultMap="userMap">
+		select id,userName,userpwd,loginTime from t_user where userName = #{userName}
+	</select>
+    <update id="updateUser" parameterType="user">
+		update t_user set loginFlag=#{loginFlag},loginTime=#{loginTime},loginErrorFlag=#{loginErrorFlag},loginErrorTime=#{loginErrorTime},status=#{status} where id = #{id}
+	</update>
+    <update id="updateUserStatus" parameterType="user">
+        update t_user set loginFlag=#{loginFlag},loginErrorFlag=#{loginErrorFlag},loginErrorTime=#{loginErrorTime},status=#{status} where id = #{id}
+    </update>
+    <update id="unlockUser" parameterType="user">
+		update t_user set status=#{status},loginErrorFlag=#{loginErrorFlag} where id = #{id}
+	</update>
+    <select id="selectUser" parameterType="user" resultMap="userMap">
+		select u.id,userName,userpwd,status,birthday,userSex,userPay,realName,d.deptName,deptId from t_user u
+			left join t_dept d
+			on u.deptId = d.id
+			where u.id = #{id}
+	</select>
+    <update id="updateUserInfo" parameterType="user">
+        update t_user set userName=#{userName},userpwd=#{userPwd},birthday=#{birthday},userSex=#{userSex},userPay=#{userPay},realName=#{realName},deptId=#{department.id},salt=#{salt},headerImg=#{headerImg} where id = #{id}
+    </update>
+    <update id="updateUserDept">
+        update t_user set deptId=#{nodesId} where id in
+        <foreach collection="userIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+    <select id="excelOutUser" parameterType="department" resultMap="userMap">
+          select userName,status,birthday,userSex,userPay,realName,d.deptName from t_user u
+			left join t_dept d
+			on u.deptId = d.id
+			where u.deptId = #{id}
+    </select>
+    <delete id="deleteUser" parameterType="list">
+        delete from t_user where id in
+        <foreach collection="list" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
